@@ -1,0 +1,176 @@
+import { launchConfetti } from "./confetti.js";
+import { playWinJingle } from "./audio.js";
+
+const LS_KEY_SETTINGS = "ba2_settings";
+const LS_KEY_PROGRESS = "ba2_progress";
+
+const DEFAULT_SETTINGS = {
+  lang: "en",
+  sound: true,
+  location: {
+    city: "Phoenix",
+    state: "Arizona"
+  }
+};
+
+const DEFAULT_PROGRESS = {
+  find: { level:1 },
+  match:{ level:1 },
+  order:{ level:1 }
+};
+
+export const STR = {
+  en: {
+    title:"Brain Activities",
+    tagline:"Simple, calm, and supportive.",
+    menuTitle:"Choose an activity",
+    orientation:"🧭 Daily Orientation",
+    routine:"🗓️ Daily Routine",
+    find:"🔎 Find the picture",
+    match:"🧠 Match pairs",
+    order:"🔢 Order numbers",
+    reminisce:"💬 Reminiscence",
+    reset:"Reset Progress",
+    test:"Test Celebration 🎉",
+    footer:"Tip: Tap the 🔊 to read instructions out loud."
+  },
+  es: {
+    title:"Actividades Mentales",
+    tagline:"Simple, tranquila y de apoyo.",
+    menuTitle:"Elige una actividad",
+    orientation:"🧭 Orientación diaria",
+    routine:"🗓️ Rutina diaria",
+    find:"🔎 Encuentra la imagen",
+    match:"🧠 Emparejar pares",
+    order:"🔢 Ordenar números",
+    reminisce:"💬 Recordar",
+    reset:"Reiniciar progreso",
+    test:"Probar celebración 🎉",
+    footer:"Consejo: Toca 🔊 para leer en voz alta."
+  },
+  ar: {
+    title:"تمارين المخ",
+    tagline:"ببساطة وهدوء ودعم.",
+    menuTitle:"اختار نشاط",
+    orientation:"🧭 معرفة اليوم",
+    routine:"🗓️ روتين يومي",
+    find:"🔎 دور على الصورة",
+    match:"🧠 طابق الاتنين",
+    order:"🔢 رتب الأرقام",
+    reminisce:"💬 ذكريات",
+    reset:"إعادة ضبط",
+    test:"جرّب الاحتفال 🎉",
+    footer:"نصيحة: دوس على 🔊 عشان يقرا بصوت."
+  }
+};
+
+function loadJson(key, fallback){
+  try{
+    const raw = localStorage.getItem(key);
+    if(!raw) return fallback;
+    return JSON.parse(raw);
+  }catch(e){
+    return fallback;
+  }
+}
+
+function saveJson(key, value){
+  localStorage.setItem(key, JSON.stringify(value));
+}
+
+export function getSettings(){
+  // merge defaults with saved settings
+  const saved = loadJson(LS_KEY_SETTINGS, {});
+  const merged = { ...DEFAULT_SETTINGS, ...saved };
+
+  // ensure nested location exists
+  merged.location = { ...DEFAULT_SETTINGS.location, ...(saved.location || {}) };
+  return merged;
+}
+
+export function setSettings(next){
+  saveJson(LS_KEY_SETTINGS, next);
+}
+
+export function getProgress(){
+  return { ...DEFAULT_PROGRESS, ...loadJson(LS_KEY_PROGRESS, {}) };
+}
+
+export function resetProgress(){
+  saveJson(LS_KEY_PROGRESS, DEFAULT_PROGRESS);
+}
+
+function applyLanguageToHome(lang){
+  const s = STR[lang];
+  const byId = (id)=>document.getElementById(id);
+
+  if(byId("appTitle")) byId("appTitle").textContent = s.title;
+  if(byId("tagline")) byId("tagline").textContent = s.tagline;
+  if(byId("menuTitle")) byId("menuTitle").textContent = s.menuTitle;
+
+  if(byId("btnOrientation")) byId("btnOrientation").textContent = s.orientation;
+  if(byId("btnRoutine")) byId("btnRoutine").textContent = s.routine;
+  if(byId("btnFind")) byId("btnFind").textContent = s.find;
+  if(byId("btnMatch")) byId("btnMatch").textContent = s.match;
+  if(byId("btnOrder")) byId("btnOrder").textContent = s.order;
+  if(byId("btnReminisce")) byId("btnReminisce").textContent = s.reminisce;
+
+  if(byId("resetBtn")) byId("resetBtn").textContent = s.reset;
+  if(byId("testCelebrateBtn")) byId("testCelebrateBtn").textContent = s.test;
+  if(byId("footerNote")) byId("footerNote").textContent = s.footer;
+
+  document.documentElement.dir = (lang === "ar") ? "rtl" : "ltr";
+  document.documentElement.lang = lang;
+}
+
+function updateSoundIcon(sound){
+  const btn = document.getElementById("soundBtn");
+  if(btn) btn.textContent = sound ? "🔊" : "🔇";
+}
+
+async function celebrate(settings){
+  launchConfetti(1500);
+  await playWinJingle(settings.sound);
+}
+
+function initHome(){
+  const settings = getSettings();
+
+  const langSelect = document.getElementById("langSelect");
+  if(langSelect){
+    langSelect.value = settings.lang;
+    langSelect.onchange = ()=>{
+      const next = { ...getSettings(), lang: langSelect.value };
+      setSettings(next);
+      applyLanguageToHome(next.lang);
+    };
+  }
+
+  applyLanguageToHome(settings.lang);
+  updateSoundIcon(settings.sound);
+
+  const soundBtn = document.getElementById("soundBtn");
+  if(soundBtn){
+    soundBtn.onclick = ()=>{
+      const cur = getSettings();
+      const next = { ...cur, sound: !cur.sound };
+      setSettings(next);
+      updateSoundIcon(next.sound);
+    };
+  }
+
+  const resetBtn = document.getElementById("resetBtn");
+  if(resetBtn){
+    resetBtn.onclick = ()=>{
+      resetProgress();
+      launchConfetti(700);
+    };
+  }
+
+  const testBtn = document.getElementById("testCelebrateBtn");
+  if(testBtn){
+    testBtn.onclick = ()=> celebrate(getSettings());
+  }
+}
+
+initHome();

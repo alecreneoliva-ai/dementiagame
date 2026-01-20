@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Reminiscence</title>
+  <link rel="stylesheet" href="../assets/styles.css" />
+</head>
+<body>
+  <main class="wrap">
+    <header class="topbar">
+      <div class="brand">
+        <h1 id="title">Reminiscence</h1>
+        <p id="subtitle" class="muted">Talk about memories.</p>
+      </div>
+
+      <div class="controls">
+        <a class="iconBtn" href="../index.html" aria-label="Back"
+           style="display:flex;align-items:center;justify-content:center;text-decoration:none;color:inherit;">←</a>
+        <button id="speakBtn" class="iconBtn" aria-label="Read aloud">🔊</button>
+      </div>
+    </header>
+
+    <section class="card">
+      <div class="row" style="justify-content:space-between;align-items:center;">
+        <div class="pill" id="countPill">1 / 5</div>
+        <button id="nextBtn" class="smallBtn btnLight">Next</button>
+      </div>
+
+      <div class="bigBlock" style="text-align:center;">
+        <div id="emojiBig" style="font-size:64px; line-height:1; margin-top:6px;">🙂</div>
+        <div class="bigValue" id="questionText" style="margin-top:10px;">—</div>
+      </div>
+
+      <div class="row" style="margin-top:14px;">
+        <button id="yesBtn" class="smallBtn btnDark" style="flex:1;">Yes 👍</button>
+        <button id="noBtn" class="smallBtn btnLight" style="flex:1;">No 👎</button>
+      </div>
+
+      <div id="statusBox" class="status" style="margin-top:12px;"></div>
+
+      <p class="muted small" id="hint">Tip: There are no wrong answers.</p>
+    </section>
+  </main>
+
+  <script type="module" src="./reminisce.js"></script>
+</body>
+</html>

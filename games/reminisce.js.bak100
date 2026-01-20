@@ -1,0 +1,269 @@
+import { getSettings } from "../assets/app.js";
+import { launchConfetti } from "../assets/confetti.js";
+import { playWinJingle } from "../assets/audio.js";
+
+// Association bank: emoji -> question -> choices (correct index).
+// Keep answers short, concrete, and familiar.
+const BANK = [
+  {
+    emoji:"🪥",
+    q: { en:"What do you use this for?", es:"¿Para qué se usa esto?", ar:"بنستخدم ده في إيه؟" },
+    a: {
+      en:["Brushing teeth","Eating","Driving","Drinking"],
+      es:["Cepillarse los dientes","Comer","Manejar","Beber"],
+      ar:["تنضيف الأسنان","الأكل","السواقة","الشرب"]
+    },
+    correct: 0
+  },
+  {
+    emoji:"🧼",
+    q: { en:"What do you use this for?", es:"¿Para qué se usa esto?", ar:"بنستخدم ده في إيه؟" },
+    a: {
+      en:["Washing hands","Sleeping","Cooking","Reading"],
+      es:["Lavarse las manos","Dormir","Cocinar","Leer"],
+      ar:["غسيل الإيدين","النوم","الطبخ","القراءة"]
+    },
+    correct: 0
+  },
+  {
+    emoji:"🔑",
+    q: { en:"What do you use this for?", es:"¿Para qué se usa esto?", ar:"بنستخدم ده في إيه؟" },
+    a: {
+      en:["Opening a door","Eating","Washing","Running"],
+      es:["Abrir una puerta","Comer","Lavar","Correr"],
+      ar:["فتح الباب","الأكل","الغسيل","الجري"]
+    },
+    correct: 0
+  },
+  {
+    emoji:"📱",
+    q: { en:"What do you use this for?", es:"¿Para qué se usa esto?", ar:"بنستخدم ده في إيه؟" },
+    a: {
+      en:["Calling someone","Cooking","Driving","Sleeping"],
+      es:["Llamar a alguien","Cocinar","Manejar","Dormir"],
+      ar:["الاتصال بحد","الطبخ","السواقة","النوم"]
+    },
+    correct: 0
+  },
+  {
+    emoji:"🍽️",
+    q: { en:"What do you use this for?", es:"¿Para qué se usa esto?", ar:"بنستخدم ده في إيه؟" },
+    a: {
+      en:["Eating food","Brushing teeth","Driving","Reading"],
+      es:["Comer","Cepillarse los dientes","Manejar","Leer"],
+      ar:["الأكل","تنضيف الأسنان","السواقة","القراءة"]
+    },
+    correct: 0
+  },
+  {
+    emoji:"🧻",
+    q: { en:"What do you use this for?", es:"¿Para qué se usa esto?", ar:"بنستخدم ده في إيه؟" },
+    a: {
+      en:["Wiping / bathroom","Driving","Reading","Cooking"],
+      es:["Limpiarse / baño","Manejar","Leer","Cocinar"],
+      ar:["الحمّام / تنضيف","السواقة","القراءة","الطبخ"]
+    },
+    correct: 0
+  },
+  {
+    emoji:"🚗",
+    q: { en:"What do you use this for?", es:"¿Para qué se usa esto?", ar:"بنستخدم ده في إيه؟" },
+    a: {
+      en:["Driving","Eating","Sleeping","Washing"],
+      es:["Manejar","Comer","Dormir","Lavar"],
+      ar:["السواقة","الأكل","النوم","الغسيل"]
+    },
+    correct: 0
+  },
+  {
+    emoji:"⌚",
+    q: { en:"What do you use this for?", es:"¿Para qué se usa esto?", ar:"بنستخدم ده في إيه؟" },
+    a: {
+      en:["Telling time","Eating","Driving","Reading"],
+      es:["Ver la hora","Comer","Manejar","Leer"],
+      ar:["معرفة الوقت","الأكل","السواقة","القراءة"]
+    },
+    correct: 0
+  },
+  {
+    emoji:"💡",
+    q: { en:"What is this for?", es:"¿Para qué sirve esto?", ar:"ده بيعمل إيه؟" },
+    a: {
+      en:["Light","Food","Car","Water"],
+      es:["Luz","Comida","Carro","Agua"],
+      ar:["نور","أكل","عربية","ماية"]
+    },
+    correct: 0
+  },
+  {
+    emoji:"🥤",
+    q: { en:"What do you use this for?", es:"¿Para qué se usa esto?", ar:"بنستخدم ده في إيه؟" },
+    a: {
+      en:["Drinking","Driving","Sleeping","Reading"],
+      es:["Beber","Manejar","Dormir","Leer"],
+      ar:["الشرب","السواقة","النوم","القراءة"]
+    },
+    correct: 0
+  }
+];
+
+function setRTL(lang){
+  document.documentElement.dir = (lang === "ar") ? "rtl" : "ltr";
+  document.documentElement.lang = lang;
+}
+
+function speak(text, enabled, lang){
+  if(!enabled) return;
+  try{ window.speechSynthesis.cancel(); }catch(e){}
+  const u = new SpeechSynthesisUtterance(text);
+  u.rate = 0.95;
+  u.pitch = 1.0;
+  u.lang = (lang === "es") ? "es" : (lang === "ar" ? "ar" : "en-US");
+  try{ window.speechSynthesis.speak(u); }catch(e){}
+}
+
+function shuffle(arr){
+  const a=[...arr];
+  for(let i=a.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+function strings(lang){
+  if(lang === "es"){
+    return { title:"Asociación", subtitle:"¿Para qué se usa?", hint:"Consejo: Toca 🔊 para escuchar la pregunta.", next:"Siguiente", good:"¡Bien!", bad:"Intenta otra vez." };
+  }
+  if(lang === "ar"){
+    return { title:"توصيل المعنى", subtitle:"بنستخدمه في إيه؟", hint:"نصيحة: دوس 🔊 عشان تسمع السؤال.", next:"التالي", good:"شطّور!", bad:"جرّب تاني." };
+  }
+  return { title:"Association", subtitle:"What is it used for?", hint:"Tip: Tap 🔊 to hear the question.", next:"Next", good:"Nice!", bad:"Try again." };
+}
+
+let settings;
+let t;
+
+let total = 5;
+let idx = 0;
+let correctSoFar = 0;
+
+let current = null;
+let currentSpoken = "";
+let locked = false;
+
+function setStatus(type, text){
+  const box = document.getElementById("statusBox");
+  box.className = "status " + type;
+  box.textContent = text;
+}
+function clearStatus(){
+  const box = document.getElementById("statusBox");
+  box.className = "status";
+  box.textContent = "";
+}
+
+function buildPrompt(){
+  document.getElementById("countPill").textContent = `${idx+1} / ${total}`;
+  clearStatus();
+  locked = false;
+
+  current = pick(BANK);
+
+  const qText = current.q[settings.lang] || current.q.en;
+  const answers = current.a[settings.lang] || current.a.en;
+
+  // Spoken prompt includes the object name implicitly by showing emoji; keep it short.
+  currentSpoken = qText;
+
+  document.getElementById("emojiBig").textContent = current.emoji;
+  document.getElementById("questionText").textContent = qText;
+
+  const choices = document.getElementById("choices");
+  choices.innerHTML = "";
+  choices.style.gridTemplateColumns = "repeat(1, 1fr)";
+
+  // Randomize answer order each time
+  const indices = shuffle([0,1,2,3]);
+
+  indices.forEach((ansIdx)=>{
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "choiceBtn";
+    btn.textContent = answers[ansIdx];
+    btn.onclick = ()=> onAnswer(ansIdx);
+    choices.appendChild(btn);
+  });
+
+  // Auto-read
+  speak(currentSpoken, settings.sound, settings.lang);
+}
+
+async function celebrateSetWin(){
+  launchConfetti(1700);
+  await playWinJingle(settings.sound);
+}
+
+function nextPrompt(){
+  idx += 1;
+
+  if(idx >= total){
+    // Celebrate if they got most correct (gentle)
+    if(correctSoFar >= Math.ceil(total * 0.6)){
+      celebrateSetWin();
+      setStatus("good", "🎉");
+    } else {
+      setStatus("good", "✅");
+    }
+
+    setTimeout(()=>{
+      idx = 0;
+      correctSoFar = 0;
+      buildPrompt();
+    }, 900);
+
+    return;
+  }
+
+  buildPrompt();
+}
+
+function onAnswer(ansIdx){
+  if(locked) return;
+  locked = true;
+
+  if(ansIdx === current.correct){
+    correctSoFar += 1;
+    setStatus("good", t.good);
+    setTimeout(()=> nextPrompt(), 550);
+  } else {
+    // Wrong: allow another try (not immediately consequential)
+    setStatus("bad", t.bad);
+    setTimeout(()=>{
+      locked = false;
+      clearStatus();
+    }, 450);
+  }
+}
+
+function init(){
+  settings = getSettings();
+  t = strings(settings.lang);
+  setRTL(settings.lang);
+
+  document.getElementById("title").textContent = t.title;
+  document.getElementById("subtitle").textContent = t.subtitle;
+  document.getElementById("hint").textContent = t.hint;
+  document.getElementById("nextBtn").textContent = t.next;
+
+  document.getElementById("speakBtn").onclick = ()=>{
+    speak(currentSpoken, settings.sound, settings.lang);
+  };
+
+  document.getElementById("nextBtn").onclick = ()=> nextPrompt();
+
+  buildPrompt();
+}
+
+init();

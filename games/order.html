@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Order Numbers</title>
+  <link rel="stylesheet" href="../assets/styles.css" />
+</head>
+<body>
+  <main class="wrap">
+    <header class="topbar">
+      <div class="brand">
+        <h1 id="title">Order numbers</h1>
+        <p id="subtitle" class="muted">Tap 1, then 2, then 3…</p>
+      </div>
+
+      <div class="controls">
+        <a class="iconBtn" href="../index.html" aria-label="Back"
+           style="display:flex;align-items:center;justify-content:center;text-decoration:none;color:inherit;">←</a>
+        <button id="repeatBtn" class="iconBtn" aria-label="Repeat">🔊</button>
+      </div>
+    </header>
+
+    <section class="card">
+      <div class="row" style="justify-content:space-between;align-items:center;">
+        <div class="pill" id="levelPill">Lv 1</div>
+        <div class="row">
+          <button id="levelDown" class="smallBtn btnLight">⬅️ Easier</button>
+          <button id="levelUp" class="smallBtn btnLight">➡️ Harder</button>
+        </div>
+      </div>
+
+      <div class="bigBlock">
+        <div class="bigLabel" id="ruleLine">Tap numbers in order.</div>
+        <div class="muted small" id="nextLine">Next: 1</div>
+      </div>
+
+      <div id="statusBox" class="status" style="margin-top:10px;"></div>
+
+      <div id="board" class="orderGrid" style="margin-top:12px;"></div>
+
+      <div class="row" style="margin-top:14px;">
+        <button id="newBtn" class="smallBtn btnDark">New board</button>
+      </div>
+
+      <p class="muted small" id="hint">Tip: Tap 🔊 to hear instructions.</p>
+    </section>
+  </main>
+
+  <script type="module" src="./order.js"></script>
+</body>
+</html>

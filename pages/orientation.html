@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Daily Orientation</title>
+  <link rel="stylesheet" href="../assets/styles.css" />
+</head>
+<body>
+  <main class="wrap">
+    <header class="topbar">
+      <div class="brand">
+        <h1 id="title">Daily Orientation</h1>
+        <p id="subtitle" class="muted">Today’s date and time.</p>
+      </div>
+
+      <div class="controls">
+        <a class="iconBtn" href="../index.html" aria-label="Back" style="display:flex;align-items:center;justify-content:center;text-decoration:none;color:inherit;">←</a>
+        <button id="speakBtn" class="iconBtn" aria-label="Read aloud">🔊</button>
+      </div>
+    </header>
+
+    <section class="card">
+      <div class="bigBlock">
+        <div class="bigLabel" id="labelToday">Today is</div>
+        <div class="bigValue" id="dateLine">—</div>
+      </div>
+
+      <div class="bigBlock">
+        <div class="bigLabel" id="labelTime">Time</div>
+        <div class="bigValue" id="timeLine">—</div>
+      </div>
+
+      <div class="bigBlock">
+        <div class="bigLabel" id="labelPlace">Place</div>
+        <div class="bigValue" id="placeLine">Home</div>
+      </div>
+
+      <div class="row" style="margin-top:16px;">
+        <button id="refreshBtn" class="smallBtn btnLight">Refresh</button>
+        <button id="celebrateBtn" class="smallBtn btnDark">Great job 🎉</button>
+      </div>
+
+      <p class="muted small" id="hint">
+        Tip: Tap 🔊 to read out loud.
+      </p>
+    </section>
+  </main>
+
+  <script type="module" src="./orientation.js"></script>
+</body>
+</html>

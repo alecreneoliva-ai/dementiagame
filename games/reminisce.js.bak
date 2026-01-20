@@ -1,0 +1,154 @@
+import { getSettings } from "../assets/app.js";
+import { launchConfetti } from "../assets/confetti.js";
+import { playWinJingle } from "../assets/audio.js";
+import { TARGETS, TARGET_NAMES } from "../data/emoji_simple.js";
+
+function setRTL(lang){
+  document.documentElement.dir = (lang === "ar") ? "rtl" : "ltr";
+  document.documentElement.lang = lang;
+}
+
+function speak(text, enabled, lang){
+  if(!enabled) return;
+  try{ window.speechSynthesis.cancel(); }catch(e){}
+  const u = new SpeechSynthesisUtterance(text);
+  u.rate = 0.95;
+  u.pitch = 1.0;
+  u.lang = (lang === "es") ? "es" : (lang === "ar" ? "ar" : "en-US");
+  try{ window.speechSynthesis.speak(u); }catch(e){}
+}
+
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+function strings(lang){
+  if(lang === "es"){
+    return {
+      title:"Recuerdos",
+      subtitle:"Habla de memorias.",
+      hint:"Consejo: No hay respuestas incorrectas.",
+      next:"Siguiente",
+      yes:"Sí 👍",
+      no:"No 👎",
+      thanks:"¡Gracias!",
+      q: (name)=> `¿Recuerdas ${name}?`
+    };
+  }
+  if(lang === "ar"){
+    return {
+      title:"ذكريات",
+      subtitle:"افتكر حاجات.",
+      hint:"نصيحة: مفيش إجابة غلط.",
+      next:"التالي",
+      yes:"أيوه 👍",
+      no:"لأ 👎",
+      thanks:"شكراً!",
+      q: (name)=> `فاكر ${name}؟`
+    };
+  }
+  return {
+    title:"Reminiscence",
+    subtitle:"Talk about memories.",
+    hint:"Tip: There are no wrong answers.",
+    next:"Next",
+    yes:"Yes 👍",
+    no:"No 👎",
+    thanks:"Thank you!",
+    q: (name)=> `Do you remember ${name}?`
+  };
+}
+
+let settings = getSettings();
+let t = strings("en");
+
+let total = 5;
+let idx = 0;
+
+let currentEmoji = null;
+let currentText = "";
+
+function setStatus(type, text){
+  const box = document.getElementById("statusBox");
+  box.className = "status " + type;
+  box.textContent = text;
+}
+
+function clearStatus(){
+  const box = document.getElementById("statusBox");
+  box.className = "status";
+  box.textContent = "";
+}
+
+function nextPrompt(){
+  idx += 1;
+
+  if(idx >= total){
+    // gentle finish celebration
+    launchConfetti(1600);
+    playWinJingle(settings.sound);
+    setStatus("good", t.thanks);
+
+    // restart after a short moment
+    setTimeout(()=>{
+      idx = 0;
+      clearStatus();
+      buildPrompt();
+    }, 900);
+
+    return;
+  }
+
+  clearStatus();
+  buildPrompt();
+}
+
+function buildPrompt(){
+  document.getElementById("countPill").textContent = `${idx+1} / ${total}`;
+
+  // pick a simple target with a known name
+  currentEmoji = pick(TARGETS);
+  const name = TARGET_NAMES[currentEmoji]?.[settings.lang] || currentEmoji;
+
+  currentText = t.q(name);
+
+  document.getElementById("emojiBig").textContent = currentEmoji;
+  document.getElementById("questionText").textContent = currentText;
+}
+
+function init(){
+  settings = getSettings();
+  setRTL(settings.lang);
+  t = strings(settings.lang);
+
+  document.getElementById("title").textContent = t.title;
+  document.getElementById("subtitle").textContent = t.subtitle;
+  document.getElementById("hint").textContent = t.hint;
+  document.getElementById("nextBtn").textContent = t.next;
+  document.getElementById("yesBtn").textContent = t.yes;
+  document.getElementById("noBtn").textContent = t.no;
+
+  document.getElementById("speakBtn").onclick = ()=>{
+    speak(currentText, settings.sound, settings.lang);
+  };
+
+  document.getElementById("nextBtn").onclick = ()=> nextPrompt();
+
+  // Yes/No just moves on (no “wrong”)
+  document.getElementById("yesBtn").onclick = ()=>{
+    setStatus("good", "👍");
+    speak(currentText, settings.sound, settings.lang);
+    setTimeout(()=> nextPrompt(), 350);
+  };
+
+  document.getElementById("noBtn").onclick = ()=>{
+    setStatus("good", "👎");
+    speak(currentText, settings.sound, settings.lang);
+    setTimeout(()=> nextPrompt(), 350);
+  };
+
+  buildPrompt();
+
+  // optional: speak on load
+  speak(currentText, settings.sound, settings.lang);
+}
+
+init();

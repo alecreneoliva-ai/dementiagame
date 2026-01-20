@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Brain Activities</title>
+  <link rel="stylesheet" href="./assets/styles.css" />
+</head>
+<body>
+  <main class="wrap">
+    <header class="topbar">
+      <div class="brand">
+        <h1 id="appTitle">Brain Activities</h1>
+        <p id="tagline" class="muted">Simple, calm, and supportive.</p>
+      </div>
+
+      <div class="controls">
+        <select id="langSelect" aria-label="Language">
+          <option value="en" selected>English</option>
+          <option value="es">Español</option>
+          <option value="ar">العربية (مصر)</option>
+        </select>
+        <button id="soundBtn" class="iconBtn" aria-label="Sound">🔊</button>
+      </div>
+    </header>
+
+    <section class="card">
+      <h2 id="menuTitle">Choose an activity</h2>
+
+      <div class="gridMenu">
+        <a class="bigBtn" href="./pages/orientation.html" id="btnOrientation">🧭 Daily Orientation</a>
+        <a class="bigBtn" href="./pages/routine.html" id="btnRoutine">🗓️ Daily Routine</a>
+        <a class="bigBtn" href="./games/find.html" id="btnFind">🔎 Find the picture</a>
+        <a class="bigBtn" href="./games/match.html" id="btnMatch">🧠 Match pairs</a>
+        <a class="bigBtn" href="./games/order.html" id="btnOrder">🔢 Order numbers</a>
+        <a class="bigBtn" href="./games/reminisce.html" id="btnReminisce">💬 Association</a>
+      </div>
+
+      <div class="row">
+        <button class="smallBtn btnLight" id="resetBtn">Reset Progress</button>
+        <button class="smallBtn btnDark" id="testCelebrateBtn">Test Celebration 🎉</button>
+      </div>
+
+      <p class="muted small" id="footerNote">Tip: Tap the 🔊 to read instructions out loud.</p>
+    </section>
+  </main>
+
+  <script type="module" src="./assets/app.js"></script>
+</body>
+</html>

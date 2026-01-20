@@ -1,0 +1,257 @@
+import { getSettings, getProgress } from "../assets/app.js";
+import { launchConfetti } from "../assets/confetti.js";
+import { playWinJingle } from "../assets/audio.js";
+
+function setRTL(lang){
+  document.documentElement.dir = (lang === "ar") ? "rtl" : "ltr";
+  document.documentElement.lang = lang;
+}
+
+function speak(text, enabled, lang){
+  if(!enabled) return;
+  try{ window.speechSynthesis.cancel(); }catch(e){}
+  const u = new SpeechSynthesisUtterance(text);
+  u.rate = 0.95;
+  u.pitch = 1.0;
+  u.lang = (lang === "es") ? "es" : (lang === "ar" ? "ar" : "en-US");
+  try{ window.speechSynthesis.speak(u); }catch(e){}
+}
+
+function shuffle(arr){
+  const a=[...arr];
+  for(let i=a.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+
+function strings(lang){
+  if(lang === "es"){
+    return {
+      title:"Ordenar números",
+      subtitle:"Toca 1, luego 2, luego 3…",
+      rule:"Toca los números en orden.",
+      hint:"Consejo: Toca 🔊 para escuchar instrucciones.",
+      newBoard:"Nuevo tablero",
+      next:"Siguiente",
+      good:"¡Bien!",
+      bad:"No. Busca el siguiente número.",
+      speak: (n)=> `Toca los números en orden, desde 1 hasta ${n}.`
+    };
+  }
+  if(lang === "ar"){
+    return {
+      title:"رتب الأرقام",
+      subtitle:"دوس ١ وبعدين ٢ وبعدين ٣…",
+      rule:"دوس على الأرقام بالترتيب.",
+      hint:"نصيحة: دوس 🔊 عشان تسمع التعليمات.",
+      newBoard:"لوحة جديدة",
+      next:"التالي",
+      good:"شطّور!",
+      bad:"لا. دور على الرقم اللي بعده.",
+      speak: (n)=> `دوس على الأرقام بالترتيب من ١ لحد ${n}.`
+    };
+  }
+  return {
+    title:"Order numbers",
+    subtitle:"Tap 1, then 2, then 3…",
+    rule:"Tap numbers in order.",
+    hint:"Tip: Tap 🔊 to hear instructions.",
+    newBoard:"New board",
+    next:"Next",
+    good:"Nice!",
+    bad:"Not that one. Find the next number.",
+    speak: (n)=> `Tap the numbers in order, from 1 to ${n}.`
+  };
+}
+
+// Level -> grid size (max 5x5)
+// Lv 1–2: 2x2 (4)
+// Lv 3–4: 3x3 (9)
+// Lv 5–6: 4x4 (16)
+// Lv 7–10: 5x5 (25)
+function gridSizeForLevel(lv){
+  if(lv <= 2) return 2;
+  if(lv <= 4) return 3;
+  if(lv <= 6) return 4;
+  return 5;
+}
+
+let settings = getSettings();
+let progress = getProgress();
+
+let gridN = 2;
+let maxNum = 4;
+
+let nextNum = 1;
+let doneSet = new Set(); // numbers already completed
+let lock = false;
+
+let nums = []; // shuffled array of numbers
+
+function setStatus(type, text){
+  const box = document.getElementById("statusBox");
+  box.className = "status " + type;
+  box.textContent = text;
+}
+function clearStatus(){
+  const box = document.getElementById("statusBox");
+  box.className = "status";
+  box.textContent = "";
+}
+
+function saveProgress(){
+  localStorage.setItem("ba2_progress", JSON.stringify(progress));
+}
+
+function updateHeaderText(){
+  const s = strings(settings.lang);
+  setRTL(settings.lang);
+
+  document.getElementById("title").textContent = s.title;
+  document.getElementById("subtitle").textContent = s.subtitle;
+  document.getElementById("ruleLine").textContent = s.rule;
+  document.getElementById("hint").textContent = s.hint;
+  document.getElementById("newBtn").textContent = s.newBoard;
+}
+
+function updateLevelPill(){
+  document.getElementById("levelPill").textContent = `Lv ${progress.order.level}`;
+}
+
+function updateNextLine(){
+  const s = strings(settings.lang);
+  document.getElementById("nextLine").textContent = `${s.next}: ${nextNum}`;
+}
+
+function buildBoard(){
+  maxNum = gridN * gridN;
+  nums = shuffle(Array.from({length:maxNum}, (_,i)=>i+1));
+
+  nextNum = 1;
+  doneSet = new Set();
+  lock = false;
+
+  updateNextLine();
+  render();
+}
+
+function render(){
+  const board = document.getElementById("board");
+  board.innerHTML = "";
+  board.style.gridTemplateColumns = `repeat(${gridN}, 1fr)`;
+
+  nums.forEach((n)=>{
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "numTile";
+    btn.textContent = n;
+
+    if(doneSet.has(n)){
+      btn.classList.add("done");
+      btn.disabled = true;
+    }
+
+    // Gentle cue: highlight the next number
+    if(n === nextNum && !doneSet.has(n)){
+      btn.classList.add("hintNext");
+    }
+
+    btn.onclick = ()=> onTap(n);
+
+    board.appendChild(btn);
+  });
+}
+
+async function celebrateWin(){
+  launchConfetti(1700);
+  await playWinJingle(settings.sound);
+}
+
+function speakInstructions(){
+  const s = strings(settings.lang);
+  const sentence = s.speak(maxNum);
+  speak(sentence, settings.sound, settings.lang);
+
+  document.getElementById("repeatBtn").onclick = ()=>{
+    speak(sentence, settings.sound, settings.lang);
+  };
+}
+
+function onTap(n){
+  if(lock) return;
+
+  const s = strings(settings.lang);
+
+  if(n === nextNum){
+    clearStatus();
+    doneSet.add(n);
+
+    if(nextNum === maxNum){
+      // WIN
+      progress.order.level = Math.min(10, progress.order.level + 1);
+      saveProgress();
+      updateLevelPill();
+
+      celebrateWin();
+
+      lock = true;
+      setTimeout(()=>{
+        lock = false;
+        startNewBoard();
+      }, 900);
+
+      return;
+    }
+
+    nextNum += 1;
+    updateNextLine();
+    render();
+    return;
+  }
+
+  // Wrong tap: calm feedback only
+  setStatus("bad", s.bad);
+  setTimeout(()=> clearStatus(), 600);
+}
+
+function startNewBoard(){
+  settings = getSettings();
+  progress = getProgress();
+  if(!progress.order) progress.order = { level: 1 };
+
+  updateHeaderText();
+  updateLevelPill();
+
+  gridN = gridSizeForLevel(progress.order.level);
+  buildBoard();
+  speakInstructions();
+}
+
+function wireButtons(){
+  document.getElementById("newBtn").onclick = ()=> startNewBoard();
+
+  document.getElementById("levelUp").onclick = ()=>{
+    progress.order.level = Math.min(10, progress.order.level + 1);
+    saveProgress();
+    startNewBoard();
+  };
+
+  document.getElementById("levelDown").onclick = ()=>{
+    progress.order.level = Math.max(1, progress.order.level - 1);
+    saveProgress();
+    startNewBoard();
+  };
+}
+
+function init(){
+  settings = getSettings();
+  progress = getProgress();
+  if(!progress.order) progress.order = { level: 1 };
+
+  wireButtons();
+  startNewBoard();
+}
+
+init();
