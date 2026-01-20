@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Brain Activities</title>
+  <link rel="stylesheet" href="assets/styles.css" />
+</head>
+<body>
+  <div class="wrap">
+    <div class="topRow">
+      <div>
+        <h1 id="titleText">Brain Activities</h1>
+        <div class="muted" id="homeHint"></div>
+      </div>
+
+      <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+        <span class="pill" id="levelPill">Lv 1</span>
+        <select id="langSelect" aria-label="Language">
+          <option value="ar">العربية (مصر)</option>
+          <option value="en" selected>English</option>
+          <option value="es">Español</option>
+        </select>
+        <button id="soundBtn" title="Sound">🔊</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="muted" id="subtitleText">Simple, calm, and supportive.</div>
+
+      <div class="bigBtns">
+        <a class="bigBtn" href="games/find.html" id="findBtn">🔎 Find the picture</a>
+        <a class="bigBtn" href="games/match.html" id="matchBtn">🧠 Match pairs</a>
+        <a class="bigBtn" href="games/order.html" id="orderBtn">🔢 Order numbers</a>
+      </div>
+
+      <div class="row" style="margin-top:14px;">
+        <button class="smallBtn btnLight" id="resetBtn">Reset Progress</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { STR, initHeader, loadProg } from "./assets/app.js";
+
+    const { lang } = initHeader();
+    const s = STR[lang];
+
+    document.getElementById("homeHint").textContent = s.homeHint;
+    document.getElementById("subtitleText").textContent = s.sub ?? "";
+    document.getElementById("findBtn").textContent = s.find;
+    document.getElementById("matchBtn").textContent = s.match;
+    document.getElementById("orderBtn").textContent = s.order;
+
+    // Overall level = average of the 3 games
+    const prog = loadProg();
+    const avg = Math.round((prog.find.level + prog.match.level + prog.order.level)/3);
+    document.getElementById("levelPill").textContent = `Lv ${avg}`;
+
+    // Reset progress (levels back to 1)
+    document.getElementById("resetBtn").onclick = () => {
+      localStorage.setItem("brain_prog", JSON.stringify({
+        find:  { level:1, streak:0, misses:0 },
+        match: { level:1, streak:0, misses:0 },
+        order: { level:1, streak:0, misses:0 }
+      }));
+      location.reload();
+    };
+  </script>
+</body>
+</html>
